@@ -12,9 +12,9 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from functions import resize_img, get_next_batch
 
-dataset = np.array(pd.read_csv("train.csv").iloc[:])
-
-X_batch, y_batch = get_next_batch(dataset, 1)
+dataset = pd.read_csv("train.csv").iloc[:]
+del dataset["manually_verified"]
+data = np.array(dataset)
 
 num_exemples = dataset.shape[0]
 height = 50
@@ -75,15 +75,14 @@ with tf.name_scope("eval"):
 with tf.name_scope("init_and_save"):
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
-    
-n_epochs = 10
+
 batch_size = 100
 
 with tf.Session() as sess:
     init.run()
     for epoch in range(n_epochs):
         for iteration in range(num_exemples // batch_size):
-            X_batch, y_batch = get_next_batch(batch_size)
+            X_batch, y_batch = get_next_batch(data, batch_size)
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
         acc_train = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
         acc_test = accuracy.eval(feed_dict={X: mnist.test.images, y: mnist.test.labels})
@@ -91,9 +90,3 @@ with tf.Session() as sess:
 
         save_path = saver.save(sess, "./sound_model")
         
-        
-
-
-from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("/tmp/data/")
-X_batch, y_batch = mnist.train.next_batch(100)
