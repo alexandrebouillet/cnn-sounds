@@ -11,17 +11,21 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from functions import resize_img, get_next_batch
+from sklearn import preprocessing
 
 dataset = pd.read_csv("train.csv").iloc[:]
+le = preprocessing.LabelEncoder()
+label_encoded = le.fit_transform(dataset["label"].reshape(-1))
+dataset["label"] = label_encoded
 del dataset["manually_verified"]
 data = np.array(dataset)
 
 num_exemples = dataset.shape[0]
 height = 50
 width = 50
+channels = 3
 dim = (width, height)
-channels = 1
-n_inputs = height * width
+n_inputs = (height * width) * channels
 
 conv1_fmaps = 32
 conv1_ksize = 3
@@ -76,17 +80,17 @@ with tf.name_scope("init_and_save"):
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
 
-batch_size = 100
+batch_size = 10
+n_epochs = 1000
 
 with tf.Session() as sess:
     init.run()
     for epoch in range(n_epochs):
         for iteration in range(num_exemples // batch_size):
-            X_batch, y_batch = get_next_batch(data, batch_size)
+            X_batch, y_batch = get_next_batch(data, batch_size, dim)
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
         acc_train = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
-        acc_test = accuracy.eval(feed_dict={X: mnist.test.images, y: mnist.test.labels})
-        print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
+        print(epoch, "Train accuracy:", acc_train)
 
         save_path = saver.save(sess, "./sound_model")
         
