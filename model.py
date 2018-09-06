@@ -21,8 +21,8 @@ del dataset["manually_verified"]
 data = np.array(dataset)
 
 num_exemples = dataset.shape[0]
-height = 50
-width = 50
+height = 56
+width = 56
 channels = 3
 dim = (width, height)
 n_inputs = (height * width) * channels
@@ -40,7 +40,7 @@ conv2_pad = "SAME"
 pool3_fmaps = conv2_fmaps
 
 n_fc1 = 64
-n_outputs = 10
+n_outputs = 41
 
 
 with tf.name_scope("inputs"):
@@ -80,14 +80,15 @@ with tf.name_scope("init_and_save"):
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
 
-batch_size = 10
-n_epochs = 1000
+batch_size = 100
+n_epochs = 10
 
 with tf.Session() as sess:
     init.run()
     for epoch in range(n_epochs):
         for iteration in range(num_exemples // batch_size):
             X_batch, y_batch = get_next_batch(data, batch_size, dim)
+            print("Epoch : "+ str(epoch) +", Iteration : "+ str(iteration) +"/"+ str(num_exemples // batch_size))
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
         acc_train = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
         print(epoch, "Train accuracy:", acc_train)
