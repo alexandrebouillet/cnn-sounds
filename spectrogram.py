@@ -6,15 +6,15 @@ import os
 from os.path import isfile, join
 import gc
 
-sounds_path = "./all/"
-data_path = "./data/"
+sounds_path = "./all/audio_test/"
+data_path = "./data/audio_test/"
 
 def graph_spectrogram(wav_file):
     sound_info, frame_rate = get_wav_info(sounds_path+wav_file+".wav")
-    pylab.figure(num=None, figsize=(20, 20))
+    pylab.figure(figsize=(2, 2), dpi=100)
     pylab.specgram(sound_info, Fs=frame_rate)
     pylab.axis("off")
-    pylab.savefig(data_path+wav_file+".png", bbox_inches='tight', dpi=300, pad_inches=0)
+    pylab.savefig(data_path+wav_file+".png", dpi=100, pad_inches=0)
     pylab.close("all")
     gc.collect
 def get_wav_info(wav_file):
@@ -30,5 +30,5 @@ data_file = [os.path.splitext(f)[0] for f in os.listdir(data_path) if isfile(joi
 
 files = list(set(sounds_file) - set(data_file))
 
-pool = multiprocessing.Pool()
+pool = multiprocessing.Pool(processes=3)
 pool.map(graph_spectrogram,files)
