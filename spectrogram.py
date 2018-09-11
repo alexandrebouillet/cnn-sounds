@@ -6,8 +6,8 @@ import os
 from os.path import isfile, join
 import gc
 
-sounds_path = "./all/audio_train/"
-data_path = "./data/audio_train/"
+sounds_path = "./all/audio_test/"
+data_path = "./data/audio_test/"
 
 def graph_spectrogram(wav_file):
     sound_info, frame_rate = get_wav_info(sounds_path+wav_file+".wav")
@@ -33,5 +33,5 @@ data_file = [os.path.splitext(f)[0] for f in os.listdir(data_path) if isfile(joi
 
 files = list(set(sounds_file) - set(data_file))
 
-pool = multiprocessing.Pool()
+pool = multiprocessing.Pool(processes=2)
 pool.map(graph_spectrogram,files)
