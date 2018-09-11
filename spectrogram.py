@@ -6,8 +6,8 @@ import os
 from os.path import isfile, join
 import gc
 
-sounds_path = "./all/audio_test/"
-data_path = "./data/audio_test/"
+sounds_path = "./all/audio_train/"
+data_path = "./data/audio_train/"
 
 def graph_spectrogram(wav_file):
     sound_info, frame_rate = get_wav_info(sounds_path+wav_file+".wav")

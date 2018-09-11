@@ -20,6 +20,8 @@ dataset["label"] = label_encoded
 del dataset["manually_verified"]
 data = np.array(dataset)
 
+
+
 num_exemples = dataset.shape[0]
 height = 28
 width = 28
@@ -97,7 +99,8 @@ with tf.Session() as sess:
             X_batch, y_batch = get_next_batch(data, batch_size, dim)
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
         acc_train = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
-        #acc_test = accuracy.eval(feed_dict={X: X_batch_test, y: y_batch_test})
-        print(epoch, "Train accuracy:", acc_train, "Test accuracy:")
+        X_batch_test, y_batch_test = get_dataset_test(batch_size, dim)
+        acc_test = accuracy.eval(feed_dict={X: X_batch_test, y: y_batch_test})
+        print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
         save_path = saver.save(sess, "./sound_model")
         
