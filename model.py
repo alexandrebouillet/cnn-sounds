@@ -9,8 +9,7 @@ Created on Sat Aug 11 09:52:06 2018
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
-from utilities import resize_img, get_next_batch, get_dataset_test
+from utilities import get_next_batch, get_data_test, get_model_params, restore_model_params
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
@@ -23,7 +22,7 @@ data = np.array(pd.concat([X_train, y_train], axis=1))
 data_test = np.array(pd.concat([X_test, y_test], axis=1))
 
 
-num_exemples = dataset.shape[0]
+num_exemples = data.shape[0]
 height = 28
 width = 28
 channels = 3
@@ -47,7 +46,6 @@ n_fc1 = 128
 fc1_dropout_rate = 0.5
 
 n_outputs = 41
-
 
 with tf.name_scope("inputs"):
     X = tf.placeholder(tf.float32, shape=[None, n_inputs], name="X")
@@ -92,16 +90,42 @@ with tf.name_scope("init_and_save"):
 
 batch_size = 64
 n_epochs = 100
+X_test, y_test = get_data_test(data_test, dim)
+
+best_loss_val = np.infty
+check_interval = 50
+checks_since_last_progress = 0
+max_checks_without_progress = 20
+best_model_params = None
 
 with tf.Session() as sess:
     init.run()
     for epoch in range(n_epochs):
         for iteration in range(num_exemples // batch_size):
             X_batch, y_batch = get_next_batch(data, batch_size, dim)
-            sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
+            sess.run(training_op, feed_dict={X: X_batch, y: y_batch, training: True})
+            if iteration % check_interval == 0:
+                loss_val = loss.eval(feed_dict={X: X_test,
+                                                y: y_test})
+                if loss_val < best_loss_val:
+                    best_loss_val = loss_val
+                    checks_since_last_progress = 0
+                    best_model_params = get_model_params()
+                else:
+                    checks_since_last_progress += 1
         acc_train = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
-        X_batch_test, y_batch_test = get_next_batch(data_test,batch_size, dim)
-        acc_test = accuracy.eval(feed_dict={X: X_batch_test, y: y_batch_test})
-        print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
-        save_path = saver.save(sess, "./sound_model")
+        acc_val = accuracy.eval(feed_dict={X: X_test,
+                                           y: y_test})
+        print("Epoch {}, train accuracy: {:.4f}%, valid. accuracy: {:.4f}%, valid. best loss: {:.6f}".format(
+                  epoch, acc_train * 100, acc_val * 100, best_loss_val))
+        if checks_since_last_progress > max_checks_without_progress:
+            print("Early stopping!")
+            break
+
+    if best_model_params:
+        restore_model_params(best_model_params)
+    acc_test = accuracy.eval(feed_dict={X: X_test,
+                                        y: y_test})
+    print("Final accuracy on test set:", acc_test)
+    save_path = saver.save(sess, "./my_mnist_model")
         
