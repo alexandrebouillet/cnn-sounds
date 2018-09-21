@@ -12,14 +12,15 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from utilities import resize_img, get_next_batch, get_dataset_test
 from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
 
 dataset = pd.read_csv("./data/train.csv").iloc[:]
 le = preprocessing.LabelEncoder()
-label_encoded = le.fit_transform(dataset["label"].reshape(-1))
-dataset["label"] = label_encoded
+dataset["label"] = le.fit_transform(dataset["label"])
+X_train, X_test, y_train, y_test = train_test_split(dataset["fname"], dataset["label"], test_size=0.33)
 del dataset["manually_verified"]
-data = np.array(dataset)
-
+data = np.array(pd.concat([X_train, y_train], axis=1))
+data_test = np.array(pd.concat([X_test, y_test], axis=1))
 
 
 num_exemples = dataset.shape[0]
@@ -89,8 +90,8 @@ with tf.name_scope("init_and_save"):
     init = tf.global_variables_initializer()
     saver = tf.train.Saver()
 
-batch_size = 250
-n_epochs = 50
+batch_size = 64
+n_epochs = 100
 
 with tf.Session() as sess:
     init.run()
@@ -99,7 +100,7 @@ with tf.Session() as sess:
             X_batch, y_batch = get_next_batch(data, batch_size, dim)
             sess.run(training_op, feed_dict={X: X_batch, y: y_batch})
         acc_train = accuracy.eval(feed_dict={X: X_batch, y: y_batch})
-        X_batch_test, y_batch_test = get_dataset_test(batch_size, dim)
+        X_batch_test, y_batch_test = get_next_batch(data_test,batch_size, dim)
         acc_test = accuracy.eval(feed_dict={X: X_batch_test, y: y_batch_test})
         print(epoch, "Train accuracy:", acc_train, "Test accuracy:", acc_test)
         save_path = saver.save(sess, "./sound_model")
